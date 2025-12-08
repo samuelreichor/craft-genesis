@@ -4,6 +4,14 @@ namespace samuelreichor\genesis;
 
 use Craft;
 use craft\base\Plugin;
+use craft\events\RegisterComponentTypesEvent;
+use craft\services\Utilities;
+use samuelreichor\genesis\services\CsvImporterService;
+use samuelreichor\genesis\services\CsvTransformerService;
+use samuelreichor\genesis\services\CsvValidationService;
+use samuelreichor\genesis\utilities\ImportUtil;
+use yii\base\Event;
+use yii\log\FileTarget;
 
 /**
  * Genesis plugin
@@ -12,6 +20,9 @@ use craft\base\Plugin;
  * @author Samuel Reichör <samuelreichor@gmail.com>
  * @copyright Samuel Reichör
  * @license MIT
+ * @property-read CsvValidationService $csvValidationService
+ * @property-read CsvTransformerService $csvTransformerService
+ * @property-read CsvImporterService $csvImporterService
  */
 class Genesis extends Plugin
 {
@@ -20,9 +31,7 @@ class Genesis extends Plugin
     public static function config(): array
     {
         return [
-            'components' => [
-                // Define component configs here...
-            ],
+            'components' => ['csvValidationService' => CsvValidationService::class, 'csvTransformerService' => CsvTransformerService::class, 'csvImporterService' => CsvImporterService::class],
         ];
     }
 
@@ -30,6 +39,7 @@ class Genesis extends Plugin
     {
         parent::init();
 
+        $this->_initLogger();
         $this->attachEventHandlers();
 
         // Any code that creates an element query or loads Twig should be deferred until
@@ -39,9 +49,21 @@ class Genesis extends Plugin
         });
     }
 
+    private function _initLogger(): void
+    {
+        $logFileTarget = new FileTarget([
+            'logFile' => '@storage/logs/genesis.log',
+            'maxLogFiles' => 10,
+            'categories' => ['genesis'],
+            'logVars' => [],
+        ]);
+        Craft::getLogger()->dispatcher->targets[] = $logFileTarget;
+    }
+
     private function attachEventHandlers(): void
     {
-        // Register event handlers here ...
-        // (see https://craftcms.com/docs/5.x/extend/events.html to get started)
+        Event::on(Utilities::class, Utilities::EVENT_REGISTER_UTILITIES, function(RegisterComponentTypesEvent $event) {
+            $event->types[] = ImportUtil::class;
+        });
     }
 }

@@ -1,0 +1,245 @@
+{% import "_includes/forms" as forms %}
+
+<style>
+    .genesis-import-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: var(--gray-050);
+        border-radius: var(--large-border-radius);
+    }
+    .genesis-import-section h2 {
+        margin: 0 0 1rem 0;
+        font-size: 1.1rem;
+    }
+    .genesis-import-section .btn {
+        margin-top: 1rem;
+    }
+    .genesis-validation-result {
+        margin-top: 1rem;
+    }
+    .genesis-validation-result.success {
+        color: var(--success-color);
+    }
+    .genesis-validation-result.error {
+        color: var(--error-color);
+    }
+    .genesis-validation-result ul {
+        margin: 0.5rem 0 0 1.5rem;
+        padding: 0;
+    }
+    .genesis-allowed-columns {
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--gray-500);
+    }
+    .genesis-allowed-columns code {
+        background: var(--gray-100);
+        padding: 0.1rem 0.3rem;
+        border-radius: 3px;
+        font-size: 0.8rem;
+    }
+    .genesis-required {
+        color: var(--error-color);
+        font-weight: bold;
+    }
+    .genesis-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    .genesis-buttons .btn {
+        margin-top: 0;
+    }
+    .btn-import:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+</style>
+
+<div class="genesis-import">
+    {% set elementTypes = {
+        'sites': 'Sites',
+        'entryTypes': 'Entry Types',
+        'sections': 'Sections',
+        'filesystems': 'Filesystems',
+        'assets': 'Assets'
+    } %}
+
+    {% for type, label in elementTypes %}
+        <div class="genesis-import-section" id="{{ type }}-import">
+            <h2>{{ label }} Import</h2>
+
+            <form method="post" enctype="multipart/form-data" class="genesis-import-form" data-element-type="{{ type }}">
+                {{ csrfInput() }}
+                {{ actionInput('genesis/csv/validate') }}
+                {{ hiddenInput('elementType', type) }}
+
+                {{ forms.file({
+                    id: type ~ '-csv-file',
+                    name: 'csvFile',
+                    accept: '.csv',
+                    label: 'CSV File'|t('genesis'),
+                    instructions: 'Upload a CSV file with ' ~ label|lower ~ ' data.'|t('genesis')
+                }) }}
+
+                <div class="genesis-allowed-columns">
+                    <strong>{{ 'Allowed columns:'|t('genesis') }}</strong>
+                    {% for column in allowedColumns[type] ?? [] %}
+                        <code{% if column in requiredColumns[type] ?? [] %} class="genesis-required"{% endif %}>{{ column }}</code>{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                    <br>
+                    <small>{{ 'Columns marked in red are required.'|t('genesis') }}</small>
+                </div>
+
+                <div class="genesis-buttons">
+                    <button type="submit" class="btn submit btn-validate">{{ 'Validate CSV'|t('genesis') }}</button>
+                    <button type="button" class="btn submit btn-import" id="{{ type }}-import-btn" disabled>{{ 'Import CSV'|t('genesis') }}</button>
+                </div>
+
+                <div class="genesis-validation-result" id="{{ type }}-result"></div>
+            </form>
+        </div>
+    {% endfor %}
+</div>
+
+<script>
+document.querySelectorAll('.genesis-import-form').forEach(function(form) {
+    const elementType = form.dataset.elementType;
+    const resultDiv = document.getElementById(elementType + '-result');
+    const fileInput = form.querySelector('input[type="file"]');
+    const importBtn = document.getElementById(elementType + '-import-btn');
+
+    // Validate on form submit
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        if (!fileInput.files.length) {
+            resultDiv.innerHTML = '<p class="error">{{ "Please select a CSV file."|t("genesis") }}</p>';
+            resultDiv.className = 'genesis-validation-result error';
+            importBtn.classList.remove('visible');
+            return;
+        }
+
+        const formData = new FormData(form);
+
+        resultDiv.innerHTML = '<p>{{ "Validating..."|t("genesis") }}</p>';
+        resultDiv.className = 'genesis-validation-result';
+        importBtn.disabled = true;
+
+        fetch(Craft.getActionUrl('genesis/csv/validate'), {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.valid) {
+                resultDiv.innerHTML = '<p>{{ "CSV is valid! Click \"Import CSV\" to start the import."|t("genesis") }}</p>';
+                resultDiv.className = 'genesis-validation-result success';
+                importBtn.disabled = false;
+            } else {
+                let html = '<p>{{ "CSV validation failed:"|t("genesis") }}</p><ul>';
+
+                console.log(data)
+                if (data.invalidColumns && data.invalidColumns.length) {
+                    html += '<li>{{ "Invalid columns:"|t("genesis") }} <code>' + data.invalidColumns.join('</code>, <code>') + '</code></li>';
+                }
+
+                if (data.missingRequired && data.missingRequired.length) {
+                    html += '<li>{{ "Missing required columns:"|t("genesis") }} <code>' + data.missingRequired.join('</code>, <code>') + '</code></li>';
+                }
+
+                if (data.error) {
+                    html += '<li>' + data.error + '</li>';
+                }
+
+                if (data.rowErrors && Object.keys(data.rowErrors).length) {
+                    html += '<li>{{ "Row errors:"|t("genesis") }}<ul>';
+                    for (const [rowNum, errors] of Object.entries(data.rowErrors)) {
+                        errors.forEach(function(error) {
+                            html += '<li>' + error + '</li>';
+                        });
+                    }
+                    html += '</ul></li>';
+                }
+
+                html += '</ul>';
+                resultDiv.innerHTML = html;
+                resultDiv.className = 'genesis-validation-result error';
+                importBtn.disabled = true;
+            }
+        })
+        .catch(error => {
+            resultDiv.innerHTML = '<p>{{ "An error occurred during validation."|t("genesis") }}</p>';
+            resultDiv.className = 'genesis-validation-result error';
+            importBtn.disabled = true;
+            console.error('Validation error:', error);
+        });
+    });
+
+    // Import on button click
+    importBtn.addEventListener('click', function() {
+        if (!fileInput.files.length) {
+            resultDiv.innerHTML = '<p class="error">{{ "Please select a CSV file."|t("genesis") }}</p>';
+            resultDiv.className = 'genesis-validation-result error';
+            return;
+        }
+
+        const formData = new FormData(form);
+
+        resultDiv.innerHTML = '<p>{{ "Starting import..."|t("genesis") }}</p>';
+        resultDiv.className = 'genesis-validation-result';
+        importBtn.disabled = true;
+
+        fetch(Craft.getActionUrl('genesis/csv/import'), {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                resultDiv.innerHTML = '<p>' + data.message + ' <a href="' + Craft.getCpUrl('utilities/queue-manager') + '">{{ "View Queue"|t("genesis") }}</a></p>';
+                resultDiv.className = 'genesis-validation-result success';
+                fileInput.value = '';
+            } else {
+                let html = '<p>{{ "Import failed:"|t("genesis") }}</p><ul>';
+                html += '<li>' + data.error + '</li>';
+
+                if (data.validationErrors) {
+                    if (data.validationErrors.invalidColumns && data.validationErrors.invalidColumns.length) {
+                        html += '<li>{{ "Invalid columns:"|t("genesis") }} <code>' + data.validationErrors.invalidColumns.join('</code>, <code>') + '</code></li>';
+                    }
+                    if (data.validationErrors.rowErrors) {
+                        for (const [rowNum, errors] of Object.entries(data.validationErrors.rowErrors)) {
+                            errors.forEach(function(error) {
+                                html += '<li>' + error + '</li>';
+                            });
+                        }
+                    }
+                }
+
+                html += '</ul>';
+                resultDiv.innerHTML = html;
+                resultDiv.className = 'genesis-validation-result error';
+            }
+        })
+        .catch(error => {
+            resultDiv.innerHTML = '<p>{{ "An error occurred during import."|t("genesis") }}</p>';
+            resultDiv.className = 'genesis-validation-result error';
+            console.error('Import error:', error);
+        });
+    });
+
+    // Disable import button when file changes
+    fileInput.addEventListener('change', function() {
+        importBtn.disabled = true;
+        resultDiv.innerHTML = '';
+        resultDiv.className = 'genesis-validation-result';
+    });
+});
+</script>
