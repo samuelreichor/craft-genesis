@@ -12,15 +12,21 @@
   },
   "require": {
     "php": ">=8.2",
-    "craftcms/cms": "^5.8.0"
+    "craftcms/cms": "^5.0.0"
   },
   "require-dev": {
     "craftcms/ecs": "dev-main",
-    "craftcms/phpstan": "dev-main"
+    "craftcms/phpstan": "dev-main",
+    "phpunit/phpunit": "^10.5"
   },
   "autoload": {
     "psr-4": {
       "samuelreichor\\genesis\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "samuelreichor\\genesis\\tests\\": "tests/"
     }
   },
   "extra": {
@@ -33,7 +39,9 @@
   "scripts": {
     "check-cs": "ecs check --ansi",
     "fix-cs": "ecs check --ansi --fix",
-    "phpstan": "phpstan --memory-limit=1G"
+    "phpstan": "phpstan --memory-limit=1G",
+    "test": "phpunit",
+    "test:filter": "phpunit --filter"
   },
   "config": {
     "sort-packages": true,
