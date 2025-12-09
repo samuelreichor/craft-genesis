@@ -1,4 +1,10 @@
 # Release Notes for Genesis
 
-## 1.0.0
+## 1.1.0 - 2025-12-09
+
+- Add missing template preview settings to section import.
+- Add missing enableVersioning to section import
+- Add title case parsing to column headers
+
+## 1.0.0 - 2025-12-08
 - Initial release
