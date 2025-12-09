@@ -4,6 +4,7 @@ namespace samuelreichor\genesis\controllers;
 
 use Craft;
 use craft\helpers\Queue;
+use craft\helpers\StringHelper;
 use craft\web\Controller;
 use craft\web\UploadedFile;
 use samuelreichor\genesis\Genesis;
@@ -326,8 +327,10 @@ class CsvController extends Controller
             return null;
         }
 
-        // Trim whitespace and filter out empty columns
-        return array_values(array_filter(array_map('trim', $firstRow), function($col) {
+        // Trim whitespace, convert to camelCase, and filter out empty columns
+        return array_values(array_filter(array_map(function($col) {
+            return StringHelper::camelCase(trim($col));
+        }, $firstRow), function($col) {
             return $col !== '';
         }));
     }
