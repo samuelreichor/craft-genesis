@@ -48,6 +48,7 @@ class CsvValidationService extends Component
             'siteTemplate',
             'siteHome',
             'siteDefaultStatus',
+            'enableVersioning',
             'propagationMethod',
             'maxAuthors',
             'maxLevels',

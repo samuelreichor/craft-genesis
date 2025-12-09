@@ -47,6 +47,7 @@ class SectionsValidationTest extends BaseValidationTest
             'siteTemplate',
             'siteHome',
             'siteDefaultStatus',
+            'enableVersioning',
             'propagationMethod',
             'maxAuthors',
             'maxLevels',

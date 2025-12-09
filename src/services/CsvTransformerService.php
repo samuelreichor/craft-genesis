@@ -214,6 +214,7 @@ class CsvTransformerService extends Component
             maxAuthors: !empty($firstRow['maxAuthors']) ? (int)$firstRow['maxAuthors'] : 1,
             maxLevels: !empty($firstRow['maxLevels']) ? (int)$firstRow['maxLevels'] : null,
             defaultPlacement: $this->normalizeDefaultPlacement($firstRow['defaultPlacement'] ?? null),
+            enableVersioning: !isset($firstRow['enableVersioning']) || Validators::isTruthy($firstRow['enableVersioning']),
         );
     }
 

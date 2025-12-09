@@ -19,6 +19,7 @@ class SectionData
      * @param int|null $maxAuthors
      * @param int|null $maxLevels Only for structure type
      * @param string|null $defaultPlacement Only for structure type
+     * @param bool $enableVersioning
      */
     public function __construct(
         public string $handle,
@@ -30,6 +31,7 @@ class SectionData
         public ?int $maxAuthors = 1,
         public ?int $maxLevels = null,
         public ?string $defaultPlacement = null,
+        public bool $enableVersioning = true,
     ) {
     }
 
@@ -50,6 +52,7 @@ class SectionData
             'maxAuthors' => $this->maxAuthors,
             'maxLevels' => $this->maxLevels,
             'defaultPlacement' => $this->defaultPlacement,
+            'enableVersioning' => $this->enableVersioning,
         ];
     }
 
@@ -76,6 +79,7 @@ class SectionData
             maxAuthors: $data['maxAuthors'] ?? 1,
             maxLevels: $data['maxLevels'] ?? null,
             defaultPlacement: $data['defaultPlacement'] ?? null,
+            enableVersioning: $data['enableVersioning'] ?? true,
         );
     }
 }

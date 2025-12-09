@@ -167,7 +167,7 @@ class CsvImporterService extends Component
         $section->name = $sectionData->name;
         $section->handle = $sectionData->handle;
         $section->type = $sectionData->type;
-        $section->enableVersioning = true;
+        $section->enableVersioning = $sectionData->enableVersioning;
         $section->propagationMethod = $this->resolvePropagationMethod($sectionData->propagationMethod);
         $section->maxAuthors = $sectionData->maxAuthors;
         $section->maxLevels = $sectionData->maxLevels;
