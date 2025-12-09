@@ -53,6 +53,10 @@ class CsvValidationService extends Component
             'maxAuthors',
             'maxLevels',
             'defaultPlacement',
+            'enablePreviewTargets',
+            'previewTargetLabel',
+            'previewTargetUrlFormat',
+            'previewTargetAutoRefresh',
         ],
         'filesystems' => [
             'handle',

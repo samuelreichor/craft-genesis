@@ -20,6 +20,8 @@ class SectionData
      * @param int|null $maxLevels Only for structure type
      * @param string|null $defaultPlacement Only for structure type
      * @param bool $enableVersioning
+     * @param bool $enablePreviewTargets
+     * @param array $previewTargets Array of PreviewTargetData
      */
     public function __construct(
         public string $handle,
@@ -32,6 +34,8 @@ class SectionData
         public ?int $maxLevels = null,
         public ?string $defaultPlacement = null,
         public bool $enableVersioning = true,
+        public bool $enablePreviewTargets = true,
+        public array $previewTargets = [],
     ) {
     }
 
@@ -53,6 +57,8 @@ class SectionData
             'maxLevels' => $this->maxLevels,
             'defaultPlacement' => $this->defaultPlacement,
             'enableVersioning' => $this->enableVersioning,
+            'enablePreviewTargets' => $this->enablePreviewTargets,
+            'previewTargets' => array_map(fn($pt) => $pt->toArray(), $this->previewTargets),
         ];
     }
 
@@ -69,6 +75,11 @@ class SectionData
             $data['siteSettings'] ?? []
         );
 
+        $previewTargets = array_map(
+            fn($pt) => PreviewTargetData::fromArray($pt),
+            $data['previewTargets'] ?? []
+        );
+
         return new self(
             handle: $data['handle'],
             name: $data['name'],
@@ -80,6 +91,8 @@ class SectionData
             maxLevels: $data['maxLevels'] ?? null,
             defaultPlacement: $data['defaultPlacement'] ?? null,
             enableVersioning: $data['enableVersioning'] ?? true,
+            enablePreviewTargets: $data['enablePreviewTargets'] ?? true,
+            previewTargets: $previewTargets,
         );
     }
 }

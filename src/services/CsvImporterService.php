@@ -173,6 +173,13 @@ class CsvImporterService extends Component
         $section->maxLevels = $sectionData->maxLevels;
         $section->defaultPlacement = $sectionData->defaultPlacement ?? Section::DEFAULT_PLACEMENT_END;
 
+        // Set preview targets
+        if ($sectionData->enablePreviewTargets && !empty($sectionData->previewTargets)) {
+            $section->previewTargets = array_map(fn($pt) => $pt->toArray(), $sectionData->previewTargets);
+        } elseif (!$sectionData->enablePreviewTargets) {
+            $section->previewTargets = [];
+        }
+
         $section->setSiteSettings($siteSettings);
         $section->setEntryTypes($entryTypeIds);
 

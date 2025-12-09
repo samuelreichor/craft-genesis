@@ -52,6 +52,10 @@ class SectionsValidationTest extends BaseValidationTest
             'maxAuthors',
             'maxLevels',
             'defaultPlacement',
+            'enablePreviewTargets',
+            'previewTargetLabel',
+            'previewTargetUrlFormat',
+            'previewTargetAutoRefresh',
         ];
 
         $result = $this->service->validateColumns('sections', $columns);

@@ -7,6 +7,7 @@ use samuelreichor\genesis\helpers\Validators;
 use samuelreichor\genesis\models\AssetVolumeData;
 use samuelreichor\genesis\models\EntryTypeData;
 use samuelreichor\genesis\models\FilesystemData;
+use samuelreichor\genesis\models\PreviewTargetData;
 use samuelreichor\genesis\models\SectionData;
 use samuelreichor\genesis\models\SectionSiteSettingsData;
 use samuelreichor\genesis\models\SiteData;
@@ -204,6 +205,23 @@ class CsvTransformerService extends Component
             }
         }
 
+        // Determine if preview targets are enabled (default: true)
+        $enablePreviewTargets = !isset($firstRow['enablePreviewTargets']) || Validators::isTruthy($firstRow['enablePreviewTargets']);
+
+        // Collect preview targets from all rows (only if enabled)
+        $previewTargets = [];
+        if ($enablePreviewTargets) {
+            foreach ($rows as $rowData) {
+                if (!empty($rowData['previewTargetLabel']) && !empty($rowData['previewTargetUrlFormat'])) {
+                    $previewTargets[] = new PreviewTargetData(
+                        label: $rowData['previewTargetLabel'],
+                        urlFormat: $rowData['previewTargetUrlFormat'],
+                        refresh: !isset($rowData['previewTargetAutoRefresh']) || Validators::isTruthy($rowData['previewTargetAutoRefresh']),
+                    );
+                }
+            }
+        }
+
         return new SectionData(
             handle: $firstRow['handle'],
             name: $firstRow['name'],
@@ -215,6 +233,8 @@ class CsvTransformerService extends Component
             maxLevels: !empty($firstRow['maxLevels']) ? (int)$firstRow['maxLevels'] : null,
             defaultPlacement: $this->normalizeDefaultPlacement($firstRow['defaultPlacement'] ?? null),
             enableVersioning: !isset($firstRow['enableVersioning']) || Validators::isTruthy($firstRow['enableVersioning']),
+            enablePreviewTargets: $enablePreviewTargets,
+            previewTargets: $previewTargets,
         );
     }
 
