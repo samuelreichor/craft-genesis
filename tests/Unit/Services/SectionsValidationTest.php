@@ -595,6 +595,55 @@ CSV;
         $this->assertFalse($hasTemplateUriError);
     }
 
+    public function testSiteHomeAllowsEmptySiteUri(): void
+    {
+        // When siteHome is true, siteUri can be empty (homepage has no URI)
+        $csv = <<<CSV
+handle,name,type,entryTypes,siteUri,siteTemplate,siteHome
+test,Test,single,article,,_singles/home,true
+CSV;
+
+        $parsed = CsvTestHelper::parse($csv);
+        $result = $this->service->validateRows('sections', $parsed['columns'], $parsed['rows']);
+
+        // Should not have the "siteTemplate requires siteUri" error when siteHome is true
+        $hasTemplateUriError = false;
+        if (!empty($result['rowErrors'][2])) {
+            foreach ($result['rowErrors'][2] as $error) {
+                if (str_contains($error, 'siteTemplate') && str_contains($error, 'siteUri')) {
+                    $hasTemplateUriError = true;
+                    break;
+                }
+            }
+        }
+        $this->assertFalse($hasTemplateUriError);
+    }
+
+    public function testSiteHomeAllowsEmptySiteUriOnMultiSiteRows(): void
+    {
+        // Multi-site rows: type may be empty but siteHome=true should still allow empty siteUri
+        $csv = <<<CSV
+handle,name,type,entryTypes,site,siteUri,siteTemplate,siteHome
+home,Home,single,article,en,,_pages/home,true
+home,Home,,,de,,_pages/home,true
+CSV;
+
+        $parsed = CsvTestHelper::parse($csv);
+        $result = $this->service->validateRows('sections', $parsed['columns'], $parsed['rows']);
+
+        // Neither row should have the "siteTemplate requires siteUri" error
+        $hasTemplateUriError = false;
+        foreach ($result['rowErrors'] ?? [] as $rowErrors) {
+            foreach ($rowErrors as $error) {
+                if (str_contains($error, 'siteTemplate') && str_contains($error, 'siteUri')) {
+                    $hasTemplateUriError = true;
+                    break 2;
+                }
+            }
+        }
+        $this->assertFalse($hasTemplateUriError);
+    }
+
     public function testValidSiteUriAndSiteTemplate(): void
     {
         $csv = <<<CSV

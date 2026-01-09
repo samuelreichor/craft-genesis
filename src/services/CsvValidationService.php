@@ -366,7 +366,7 @@ class CsvValidationService extends Component
                 'row' => $rowNumber,
             ]);
         }
-        if (!empty($siteTemplate) && empty($siteUri) && $type !== 'single') {
+        if (!empty($siteTemplate) && empty($siteUri) && $type !== 'single' && !Validators::isTruthy($siteHome)) {
             $errors[] = Craft::t('genesis', 'Row {row}: When "siteTemplate" is set, "siteUri" must also be set.', [
                 'row' => $rowNumber,
             ]);
